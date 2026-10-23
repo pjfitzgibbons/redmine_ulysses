@@ -92,14 +92,16 @@ class UlyssesFieldsController < ApplicationController
   end
 
   def answer_rest(status, message: nil, outcome: nil)
-    @issue = Issue.find(@issue.id) unless status == :ok
+    return if status != :ok && !reload_issue
+
     answer status, 'rest', issue: @issue, field: @field, message: message, outcome: outcome
   end
 
   # The editor stays open with the user's value. The issue is read again for its saved value,
   # its lock_version and, on a conflict, who changed it last.
   def answer_editor(status, value, errors: [], conflict: false)
-    @issue = Issue.find(@issue.id)
+    return unless reload_issue
+
     locals = editor_locals(value).merge(errors: errors)
     if conflict
       last = @issue.journals.visible.reorder(:id).last
@@ -111,6 +113,13 @@ class UlyssesFieldsController < ApplicationController
         end
     end
     answer status, 'editor', locals
+  end
+
+  # The issue as saved, or a 404 if another request has meanwhile put it out of the user's sight.
+  def reload_issue
+    @issue = Issue.visible.find_by(id: @issue.id)
+    render_404 unless @issue
+    @issue
   end
 
   def editor_locals(value)

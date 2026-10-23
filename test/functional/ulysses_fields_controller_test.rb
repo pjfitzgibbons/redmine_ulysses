@@ -263,6 +263,17 @@ class UlyssesFieldsControllerTest < Redmine::ControllerTest
     assert_equal 'before', @issue.reload.custom_field_value(@text)
   end
 
+  # The editor names a value the issue doesn't offer, but never by a record the user can't see.
+  def test_unavailable_version_of_a_project_the_user_cant_see_is_not_named
+    version = Version.generate!(project: Project.generate!(is_public: false), name: 'Secret release')
+    assert_unnamed_unavailable_choice 'fixed_version_id', version
+  end
+
+  def test_unavailable_category_of_a_project_the_user_cant_see_is_not_named
+    category = IssueCategory.create!(project: Project.generate!(is_public: false), name: 'Secret category')
+    assert_unnamed_unavailable_choice 'category_id', category
+  end
+
   # 400
 
   def test_array_for_a_core_field_is_400
@@ -283,6 +294,20 @@ class UlyssesFieldsControllerTest < Redmine::ControllerTest
       patch :update, params: {id: 1, field: 'subject', value: 'New subject'}
     end
     assert_response :bad_request
+  end
+
+  # Lost from sight between the first read and the answer
+
+  def test_issue_hidden_before_a_conflict_answers_404
+    assert_hidden_before_the_answer(:not_found) { save 'subject', 'Secret now', lock_version: 2 }
+  end
+
+  def test_issue_hidden_before_a_validation_failure_answers_404
+    assert_hidden_before_the_answer(:not_found) { save 'subject', '' }
+  end
+
+  def test_issue_hidden_before_a_refusal_answers_404
+    assert_hidden_before_the_answer(:not_found) { save 'status_id', '3' }
   end
 
   # The other checks
@@ -378,6 +403,28 @@ class UlyssesFieldsControllerTest < Redmine::ControllerTest
     assert_equal 'true', control['aria-invalid']
     assert frame.at_css('.ulysses-field-error[role=alert] li')
     assert_equal saved, rest_value(field).text.strip
+  end
+
+  # A save of field needing a note, sent without one, to record: a 422 whose editor keeps record
+  # selected but shows only its id.
+  def assert_unnamed_unavailable_choice(field, record)
+    with_settings plugin_redmine_ulysses: {'notes_required' => [field]} do
+      save field, record.id.to_s
+    end
+    assert_response :unprocessable_content
+    assert_not_includes response.body, record.name
+    selected = stream_content("ulysses-issue-1-#{field}").at_css('[name=value] option[selected]')
+    assert_equal record.id.to_s, selected['value']
+    assert_equal "#{record.id} (not available now)", selected.text
+  end
+
+  # Issue.visible finds issue 1 for the first checks and nothing when the answer reads it again,
+  # as if another request had meanwhile moved it out of the user's sight.
+  def assert_hidden_before_the_answer(status)
+    Issue.stubs(:visible).returns(Issue.where(id: 1)).then.returns(Issue.none)
+    assert_no_difference('Journal.count') { yield }
+    assert_response status
+    assert_not_includes response.body, 'Cannot print recipes'
   end
 
   def assert_one_journal_by_jsmith(property, prop_key, old_value, value)

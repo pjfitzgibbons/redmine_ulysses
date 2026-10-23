@@ -45,7 +45,7 @@ module UlyssesFieldsHelper
         check_box_tag('value', '1', ActiveModel::Type::Boolean.new.cast(value), options)
     else
       if (choices = ulysses_field_choices(issue, field))
-        choices = ulysses_with_unavailable_choice(field, choices, value)
+        choices = ulysses_with_unavailable_choice(issue, field, choices, value)
         select_tag('value', options_for_select(choices, value.to_s), options)
       else
         text_field_tag('value', value, options)
@@ -56,13 +56,27 @@ module UlyssesFieldsHelper
   # choices with value added, labelled as not available, when the issue no longer allows it. A
   # 409 or 422 draws the choices from the issue as it is now; without this the select would show
   # its first option in place of the user's. A custom field's own control already does this.
-  def ulysses_with_unavailable_choice(field, choices, value)
+  def ulysses_with_unavailable_choice(issue, field, choices, value)
     return choices if value.blank? || choices.any? {|_, v| v == value.to_s}
 
-    probe = Issue.new
-    probe.send("#{field.key}=", value)
-    name = format_object(field.object(probe), html: false).presence || value.to_s
+    name = ulysses_choice_name(issue, field, value).presence || value.to_s
     choices + [[l(:ulysses_label_unavailable, value: name), value.to_s]]
+  end
+
+  # The name of the record value refers to, looked up only among the records the user may see. The
+  # value comes from the request, and may name a version or category of a project the user can't
+  # see; then it is shown as sent.
+  def ulysses_choice_name(issue, field, value)
+    record =
+      case field.key
+      when 'tracker_id' then Tracker.visible.find_by(id: value)
+      when 'status_id' then IssueStatus.find_by(id: value)
+      when 'priority_id' then IssuePriority.find_by(id: value)
+      when 'assigned_to_id' then Principal.visible.find_by(id: value)
+      when 'category_id' then issue.project.issue_categories.find_by(id: value)
+      when 'fixed_version_id' then Version.visible.find_by(id: value)
+      end
+    record&.to_s
   end
 
   # The values a list field may take, as [label, value] pairs, or nil for a field typed in.
