@@ -77,8 +77,8 @@ one dark block, a reduced-motion block and `@font-face` rules, and nothing else:
   Set a colour in both when the light value won't read on the dark grounds.
 - Fonts go beside the file, in `public/ulysses/fonts/`, and the `url()` is relative to it. Serve
   them from Redmine itself: Ulysses loads nothing from another host.
-- Values are plain CSS. The check reads colours as `#rgb`, `#rrggbb`, `rgb()` or `var()` of another
-  `--uly-*` property.
+- Values are plain CSS without `!important`. The check reads colours as `#rgb`, `#rrggbb`, opaque
+  `rgb()` or `var()` of another `--uly-*` property.
 - Redmine serves `public/` as it is. The link carries the file's modification time, so a saved
   change shows on the next page load, with no restart and no asset compile.
 

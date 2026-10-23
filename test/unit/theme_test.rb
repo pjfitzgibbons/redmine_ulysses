@@ -89,6 +89,21 @@ class ThemeTest < ActiveSupport::TestCase
                     'light: --uly-on-primary on --uly-primary-fill is 1.00:1, under 4.5:1'
   end
 
+  def test_rgb_takes_commas_or_spaces_between_channels_but_not_both
+    assert_equal [], Theme.check(':root { --uly-primary-fill: rgb(11, 90, 168); }')
+    assert_equal [], Theme.check(':root { --uly-primary-fill: rgb(11 90 168 / 1); }')
+    ['rgb(11,,90,168)', 'rgb(11, 90 168)', 'rgb(11 90 168, 1)'].each do |value|
+      assert_includes Theme.check(":root { --uly-primary-fill: #{value}; }"),
+                      "light: can't read --uly-primary-fill as a colour (#{value.inspect})"
+    end
+  end
+
+  def test_check_fails_on_important_even_when_overwritten
+    assert_equal ["--uly-ink can't be !important: a theme's later declarations win by order"],
+                 Theme.check(':root { --uly-ink: #fff !important; --uly-ink: #0d1321; } ' \
+                             '@media (prefers-color-scheme: dark) { :root { --uly-ink: #e8edf5; } }')
+  end
+
   def test_check_fails_on_statements_and_braces_outside_a_block
     assert_equal ['@import url("other.css") isn\'t part of a theme: set the contract\'s properties in :root'],
                  Theme.check('@import url("other.css");')

@@ -119,6 +119,12 @@ module RedmineUlysses
       errors
     end
 
+    # rgb() channels with commas or spaces between them, never both, and an opaque alpha if any.
+    RGB = [
+      %r{\Argba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*(?:1|1\.0+|100%)\s*)?\)\z},
+      %r{\Argba?\(\s*(\d+)\s+(\d+)\s+(\d+)\s*(?:/\s*(?:1|1\.0+|100%)\s*)?\)\z}
+    ].freeze
+
     # A colour value as [r, g, b] in 0..255: #rgb, #rrggbb, rgb() with an opaque alpha if any,
     # its channels clamped as the browser clamps them, or var() of another property. nil for
     # anything else, a var() cycle included.
@@ -130,8 +136,7 @@ module RedmineUlysses
       when /\Avar\(\s*(--[\w-]+)\s*\)\z/ then color(values, Regexp.last_match(1), depth + 1)
       when /\A#(\h)(\h)(\h)\z/ then Regexp.last_match.captures.map { |c| (c * 2).hex }
       when /\A#(\h\h)(\h\h)(\h\h)\z/ then Regexp.last_match.captures.map(&:hex)
-      when %r{\Argba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)\s*(?:[,/]\s*(1|1\.0+|100%)\s*)?\)\z}
-        Regexp.last_match.captures.first(3).map { |c| [c.to_i, 255].min }
+      when *RGB then Regexp.last_match.captures.map { |c| [c.to_i, 255].min }
       end
     end
 
@@ -203,6 +208,9 @@ module RedmineUlysses
         name, value = decl.split(':', 2).map(&:strip)
         if value.nil? || !name.start_with?('--')
           sheet.errors << "#{decl.strip} isn't a custom property: a theme sets only --uly-* properties"
+        elsif value.match?(/!\s*important\s*\z/i)
+          # An important declaration outranks every later one, which the check doesn't model.
+          sheet.errors << "#{name} can't be !important: a theme's later declarations win by order"
         elsif media == :reduced_motion && CONTRACT.include?(name) && !MOTION.include?(name)
           sheet.errors << "#{name} can't be set under prefers-reduced-motion, which sets only #{MOTION.join(', ')}"
         else
