@@ -1,0 +1,7 @@
+<% issue = partial_locals[:issue]; field = partial_locals[:field] %>
+<turbo-stream action="replace" target="<%= ulysses_field_dom_id(issue, field) %>">
+  <template><%= render partial: "ulysses_fields/#{partial}", formats: [:html], locals: partial_locals %></template>
+</turbo-stream>
+<turbo-stream action="replace" target="<%= ulysses_lock_version_dom_id(issue) %>">
+  <template><%= render partial: 'ulysses_fields/lock_version', formats: [:html], locals: {issue: issue} %></template>
+</turbo-stream>
