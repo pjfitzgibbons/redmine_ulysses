@@ -12,12 +12,13 @@ module RedmineUlysses
 
     attr_reader :key, :custom_field
 
-    # The field named key, or nil when key names none.
+    # The field named key, or nil when key names none. A custom field's key is built again from its
+    # id, so cf_007 is cf_7 wherever the key is compared, notes_required included.
     def self.find(key)
       key = key.to_s
       if (m = key.match(/\Acf_(\d+)\z/))
         custom_field = IssueCustomField.find_by(id: m[1])
-        new(key, custom_field) if custom_field
+        new("cf_#{custom_field.id}", custom_field) if custom_field
       elsif CORE.include?(key)
         new(key)
       end

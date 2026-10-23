@@ -247,6 +247,22 @@ class UlyssesFieldsControllerTest < Redmine::ControllerTest
     assert_one_journal_by_jsmith('cf', @text.id.to_s, 'before', 'after')
   end
 
+  # A zero-padded id names the same field, and the same notes_required entry.
+  def test_padded_custom_field_key_needs_its_note
+    with_settings plugin_redmine_ulysses: {'notes_required' => ["cf_#{@text.id}"]} do
+      assert_no_difference 'Journal.count' do
+        save "cf_00#{@text.id}", 'after'
+      end
+      assert_response :unprocessable_content
+      Role.find(1).remove_permission!(:add_issue_notes)
+      assert_no_difference 'Journal.count' do
+        save "cf_00#{@text.id}", 'after', notes: 'Why'
+      end
+      assert_response :forbidden
+    end
+    assert_equal 'before', @issue.reload.custom_field_value(@text)
+  end
+
   # 400
 
   def test_array_for_a_core_field_is_400

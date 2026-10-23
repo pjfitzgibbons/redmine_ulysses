@@ -45,11 +45,24 @@ module UlyssesFieldsHelper
         check_box_tag('value', '1', ActiveModel::Type::Boolean.new.cast(value), options)
     else
       if (choices = ulysses_field_choices(issue, field))
+        choices = ulysses_with_unavailable_choice(field, choices, value)
         select_tag('value', options_for_select(choices, value.to_s), options)
       else
         text_field_tag('value', value, options)
       end
     end
+  end
+
+  # choices with value added, labelled as not available, when the issue no longer allows it. A
+  # 409 or 422 draws the choices from the issue as it is now; without this the select would show
+  # its first option in place of the user's. A custom field's own control already does this.
+  def ulysses_with_unavailable_choice(field, choices, value)
+    return choices if value.blank? || choices.any? {|_, v| v == value.to_s}
+
+    probe = Issue.new
+    probe.send("#{field.key}=", value)
+    name = format_object(field.object(probe), html: false).presence || value.to_s
+    choices + [[l(:ulysses_label_unavailable, value: name), value.to_s]]
   end
 
   # The values a list field may take, as [label, value] pairs, or nil for a field typed in.
