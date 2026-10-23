@@ -1,0 +1,33 @@
+# The test harness: bin/test runs it and takes it down again. Nothing here runs outside a test run.
+name: redmine-ulysses-test
+
+services:
+  redmine:
+    build:
+      context: ..
+      dockerfile: test/Dockerfile
+    image: redmine-ulysses-test:7.0.2
+    working_dir: /usr/src/redmine
+    # The Rails server Capybara starts listens on this host and port, which Chromium browses to.
+    hostname: redmine
+    environment:
+      SELENIUM_REMOTE_URL: http://chromium:4444/wd/hub
+      CAPYBARA_SERVER_HOST: redmine
+      CAPYBARA_SERVER_PORT: "3001"
+    volumes:
+      # Read-write, so ULYSSES_SNAPSHOT=1 can rewrite test/snapshots/.
+      - ..:/usr/src/redmine/plugins/redmine_ulysses
+    depends_on:
+      chromium:
+        condition: service_healthy
+
+  chromium:
+    # Built for arm64 and amd64. Chromium 155 with its chromedriver, Selenium Grid 4.51.
+    image: selenium/standalone-chromium:155.0.8059.39-chromedriver-155.0.8059.39-grid-4.51.0-20261010
+    shm_size: 2gb
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4444/status | grep -q '\"ready\": true'"]
+      start_period: 60s
+      interval: 2s
+      timeout: 5s
+      retries: 30
