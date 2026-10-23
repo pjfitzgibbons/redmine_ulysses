@@ -60,6 +60,42 @@ class ThemeTest < ActiveSupport::TestCase
                     'light: can\'t read --uly-ink as a colour ("oklch(20% 0.02 260)")'
   end
 
+  def test_a_root_after_the_dark_block_wins_in_dark
+    css = '@media (prefers-color-scheme: dark) { :root { --uly-ink: #e8edf5; } } :root { --uly-ink: #0d1321; }'
+    assert_includes Theme.check(css), 'dark: --uly-ink on --uly-page is 1.04:1, under 4.5:1'
+  end
+
+  def test_reduced_motion_may_set_only_motion
+    css = <<~CSS
+      :root { --uly-muted: #aaaaaa; }
+      @media (prefers-color-scheme: dark) { :root { --uly-muted: #b0bbcc; } }
+      @media (prefers-reduced-motion: reduce) { :root { --uly-muted: #3d4859; --uly-duration: 0ms; } }
+    CSS
+    errors = Theme.check(css)
+    assert_includes errors, "--uly-muted can't be set under prefers-reduced-motion, which sets only " \
+                            '--uly-duration, --uly-duration-slow, --uly-easing'
+    assert_includes errors, 'light: --uly-muted on --uly-page is 2.16:1, under 4.5:1'
+  end
+
+  def test_check_reads_every_colour_role_not_only_the_paired_ones
+    assert_includes Theme.check(':root { --uly-focus: not-a-colour; }'),
+                    'light: can\'t read --uly-focus as a colour ("not-a-colour")'
+    assert_includes Theme.check(':root { --uly-rule: var(--uly-rule); }'),
+                    'light: can\'t read --uly-rule as a colour ("var(--uly-rule)")'
+  end
+
+  def test_rgb_channels_are_clamped_as_the_browser_clamps_them
+    assert_includes Theme.check(':root { --uly-primary-fill: rgb(999, 999, 999); }'),
+                    'light: --uly-on-primary on --uly-primary-fill is 1.00:1, under 4.5:1'
+  end
+
+  def test_check_fails_on_statements_and_braces_outside_a_block
+    assert_equal ['@import url("other.css") isn\'t part of a theme: set the contract\'s properties in :root'],
+                 Theme.check('@import url("other.css");')
+    assert_equal [':root { … } has no closing }'], Theme.check(':root { --uly-ink: #fff;')
+    assert_equal ['a } closes no block'], Theme.check(':root { } }')
+  end
+
   def test_check_follows_var_references
     assert_equal [], Theme.check(':root { --uly-info-ink: var(--uly-primary); }')
   end
@@ -73,15 +109,15 @@ class ThemeTest < ActiveSupport::TestCase
 
   def test_reference_sets_every_property_and_every_colour_for_dark
     sheet = Theme.parse(reference)
-    assert_equal [], Theme::CONTRACT - sheet.light.keys
-    assert_equal [], Theme::COLORS - sheet.dark.keys
-    assert_equal [], sheet.light.keys - Theme::CONTRACT
+    assert_equal [], Theme::CONTRACT - sheet.set(:all).keys
+    assert_equal [], Theme::COLORS - sheet.set(:dark).keys
+    assert_equal [], sheet.set(:all).keys - Theme::CONTRACT
   end
 
   # Every text and ground pair at 4.5:1 or better and header text at 5.6:1, in light and dark (L7).
   def test_reference_contrast_in_light_and_dark
     sheet = Theme.parse(reference)
-    { light: sheet.light, dark: sheet.light.merge(sheet.dark) }.each do |mode, values|
+    { light: sheet.values(:light), dark: sheet.values(:dark) }.each do |mode, values|
       Theme::PAIRS.each do |text, ground, need|
         ratio = Theme.contrast(Theme.color(values, text), Theme.color(values, ground))
         assert_operator ratio, :>=, need, "#{mode}: #{text} on #{ground}"

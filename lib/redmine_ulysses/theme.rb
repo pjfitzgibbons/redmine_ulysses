@@ -3,8 +3,9 @@
 module RedmineUlysses
   # The theme contract, and the check a theme file passes against it (design 0004, §3.8). A theme
   # sets the contract's --uly-* properties in :root, its dark colours in
-  # @media (prefers-color-scheme: dark) { :root { … } }, and may declare @font-face rules. Anything
-  # else in the file fails the check.
+  # @media (prefers-color-scheme: dark) { :root { … } }, its motion under
+  # @media (prefers-reduced-motion: reduce) { :root { … } }, and may declare @font-face rules.
+  # Anything else in the file fails the check.
   module Theme
     # Colour roles, each given for light and for dark.
     COLORS = %w[
@@ -44,25 +45,40 @@ module RedmineUlysses
 
     DARK = /\A@media\s*\(\s*prefers-color-scheme\s*:\s*dark\s*\)\z/
     REDUCED_MOTION = /\A@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)\z/
+    # What the reduced-motion block may set.
+    MOTION = %w[--uly-duration --uly-duration-slow --uly-easing].freeze
 
-    # The declarations a theme file sets, by where they apply.
-    Sheet = Struct.new(:light, :dark, :errors)
+    # The declarations a theme file sets, in source order, each with the media it applies under:
+    # :all, :dark or :reduced_motion.
+    Sheet = Struct.new(:decls, :errors) do
+      # The properties set under one media, later declarations winning.
+      def set(media)
+        decls.each_with_object({}) { |(m, name, value), out| out[name] = value if m == media }
+      end
+
+      # The values in effect for :light or :dark, in source order as the browser applies them, so
+      # a :root after the dark block wins in dark too.
+      def values(mode)
+        applies = mode == :dark ? %i[all dark] : %i[all]
+        decls.each_with_object({}) { |(m, name, value), out| out[name] = value if applies.include?(m) }
+      end
+    end
 
     module_function
 
     def parse(css)
-      sheet = Sheet.new({}, {}, [])
-      blocks(strip_comments(css)).each do |selector, body|
+      sheet = Sheet.new([], [])
+      blocks(strip_comments(css), sheet.errors).each do |selector, body|
         case selector
-        when ':root' then declare(sheet, sheet.light, body)
+        when ':root' then declare(sheet, :all, body)
         when '@font-face' then nil
         when DARK, REDUCED_MOTION
-          inner = blocks(body)
+          inner = blocks(body, sheet.errors)
           if inner.empty? || inner.any? { |s, _| s != ':root' }
             sheet.errors << "#{selector} may hold only :root { … }"
           else
-            target = selector.match?(DARK) ? sheet.dark : sheet.light
-            inner.each { |_, b| declare(sheet, target, b) }
+            media = selector.match?(DARK) ? :dark : :reduced_motion
+            inner.each { |_, b| declare(sheet, media, b) }
           end
         else
           sheet.errors << "#{selector} { … } isn't part of a theme: set the contract's properties in :root"
@@ -71,40 +87,41 @@ module RedmineUlysses
       sheet
     end
 
-    # Problems with a theme file, as messages; none means it passes. The reference fills whatever
-    # the file leaves out, in the order the browser applies them: a property the file sets in
-    # :root applies in light and dark, unless its dark block sets it again.
+    # Problems with a theme file, as messages; none means it passes. The file loads after the
+    # reference, so each mode's values are the reference's with the file's on top.
     def check(css, reference: File.read(REFERENCE))
       sheet = parse(css)
       ref = parse(reference)
-      errors = sheet.errors.dup
-      (sheet.light.keys | sheet.dark.keys).each do |name|
-        next if CONTRACT.include?(name)
-
-        hint = DidYouMean::SpellChecker.new(dictionary: CONTRACT).correct(name).first
-        errors << "#{name} isn't in the contract#{" (did you mean #{hint}?)" if hint}"
-      end
-      light = ref.light.merge(sheet.light)
-      dark = ref.light.merge(ref.dark).merge(sheet.light).merge(sheet.dark)
-      { 'light' => light, 'dark' => dark }.each do |mode, values|
-        PAIRS.each do |text, ground, need|
-          fg = color(values, text)
-          bg = color(values, ground)
-          unless fg && bg
-            errors << "#{mode}: can't read #{fg ? ground : text} as a colour (#{values[fg ? ground : text].inspect})"
-            next
-          end
-          ratio = contrast(fg, bg)
-          next if ratio >= need
-
-          errors << format('%s: %s on %s is %.2f:1, under %.1f:1', mode, text, ground, ratio, need)
-        end
+      errors = sheet.errors + unknown(sheet)
+      %i[light dark].each do |mode|
+        errors.concat(colour_errors(mode, ref.values(mode).merge(sheet.values(mode))))
       end
       errors.uniq
     end
 
+    def unknown(sheet)
+      sheet.decls.map { |_, name, _| name }.uniq.reject { |name| CONTRACT.include?(name) }.map do |name|
+        hint = DidYouMean::SpellChecker.new(dictionary: CONTRACT).correct(name).first
+        "#{name} isn't in the contract#{" (did you mean #{hint}?)" if hint}"
+      end
+    end
+
+    # Every colour role must read as a colour, and every pair must meet its ratio.
+    def colour_errors(mode, values)
+      unreadable = COLORS.reject { |name| color(values, name) }
+      errors = unreadable.map { |name| "#{mode}: can't read #{name} as a colour (#{values[name].inspect})" }
+      PAIRS.each do |text, ground, need|
+        next if unreadable.include?(text) || unreadable.include?(ground)
+
+        ratio = contrast(color(values, text), color(values, ground))
+        errors << format('%s: %s on %s is %.2f:1, under %.1f:1', mode, text, ground, ratio, need) if ratio < need
+      end
+      errors
+    end
+
     # A colour value as [r, g, b] in 0..255: #rgb, #rrggbb, rgb() with an opaque alpha if any,
-    # or var() of another property. nil for anything else.
+    # its channels clamped as the browser clamps them, or var() of another property. nil for
+    # anything else, a var() cycle included.
     def color(values, name, depth = 0)
       value = values[name].to_s.strip
       return if value.empty? || depth > 8
@@ -114,7 +131,7 @@ module RedmineUlysses
       when /\A#(\h)(\h)(\h)\z/ then Regexp.last_match.captures.map { |c| (c * 2).hex }
       when /\A#(\h\h)(\h\h)(\h\h)\z/ then Regexp.last_match.captures.map(&:hex)
       when %r{\Argba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)\s*(?:[,/]\s*(1|1\.0+|100%)\s*)?\)\z}
-        Regexp.last_match.captures.first(3).map(&:to_i)
+        Regexp.last_match.captures.first(3).map { |c| [c.to_i, 255].min }
       end
     end
 
@@ -136,8 +153,9 @@ module RedmineUlysses
       css.gsub(%r{/\*.*?\*/}m, '')
     end
 
-    # Top-level `selector { body }` pairs, bodies unparsed.
-    def blocks(css)
+    # Top-level `selector { body }` pairs, bodies unparsed. A statement outside a block, an
+    # unclosed block or a stray } goes to errors.
+    def blocks(css, errors = [])
       out = []
       depth = 0
       start = 0
@@ -145,11 +163,18 @@ module RedmineUlysses
       css.each_char.with_index do |ch, i|
         if ch == '{'
           if depth.zero?
-            selector = css[start...i].strip
+            *statements, selector = css[start...i].split(';', -1)
+            stray(statements, errors)
+            selector = selector.strip
             start = i + 1
           end
           depth += 1
         elsif ch == '}'
+          if depth.zero?
+            errors << 'a } closes no block'
+            start = i + 1
+            next
+          end
           depth -= 1
           if depth.zero?
             out << [selector, css[start...i]]
@@ -157,18 +182,31 @@ module RedmineUlysses
           end
         end
       end
+      if depth.positive?
+        errors << "#{selector} { … } has no closing }"
+      else
+        stray(css[start..].split(';'), errors)
+      end
       out
     end
 
-    def declare(sheet, target, body)
+    def stray(statements, errors)
+      statements.map(&:strip).reject(&:empty?).each do |statement|
+        errors << "#{statement} isn't part of a theme: set the contract's properties in :root"
+      end
+    end
+
+    def declare(sheet, media, body)
       body.split(';').each do |decl|
         next if decl.strip.empty?
 
         name, value = decl.split(':', 2).map(&:strip)
         if value.nil? || !name.start_with?('--')
           sheet.errors << "#{decl.strip} isn't a custom property: a theme sets only --uly-* properties"
+        elsif media == :reduced_motion && CONTRACT.include?(name) && !MOTION.include?(name)
+          sheet.errors << "#{name} can't be set under prefers-reduced-motion, which sets only #{MOTION.join(', ')}"
         else
-          target[name] = value
+          sheet.decls << [media, name, value]
         end
       end
     end

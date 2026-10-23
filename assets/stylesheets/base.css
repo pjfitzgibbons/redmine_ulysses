@@ -120,8 +120,16 @@ nav.top-menu { background: var(--uly-header-from); color: var(--uly-on-header); 
 #header h1 { font-family: var(--uly-font-serif); font-weight: 600; }
 #header h1 .breadcrumbs { font-family: var(--uly-font-sans); }
 
-/* White text on a fill: core's literal white, and fills that now follow the theme. */
-.pagination ul.pages li.current { color: var(--uly-on-primary); background-color: var(--uly-primary-fill); }
+/* White text on a fill: core's literal white, and white on blue-5, which is accent here and too
+   light to hold text. Every other white-on-fill in core is surface on an ink, a pair the check
+   measures. */
+.pagination ul.pages li.current, .badge-count { color: var(--uly-on-primary); background-color: var(--uly-primary-fill); }
+.cal .calbody.today .day-value { color: var(--uly-on-primary); }
+.cal .calbody.today .day-value::before { background: var(--uly-primary-fill); }
+/* On narrow screens the project menu's trigger sits on the header. */
+@media screen and (max-width: 899px) {
+  #project-jump .drdn-trigger { color: var(--uly-on-header); }
+}
 /* Initials avatars are surface on an ink; core gives the yellow one black, which is ink on ink. */
 span[role="img"].avatar { font-family: var(--uly-font-sans); }
 .avatar-color-2 { color: var(--uly-surface); }
