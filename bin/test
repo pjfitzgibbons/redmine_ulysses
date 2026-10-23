@@ -6,7 +6,14 @@ set -eu
 
 file="$(dirname "$0")/../test/compose.yml"
 trap 'docker compose -f "$file" down --remove-orphans >/dev/null 2>&1' EXIT
+# dash and other shells don't run the EXIT trap when a signal kills them, so exit from the signal
+# instead. The run is in the background because a shell runs traps only between commands, and
+# wait returns as soon as a signal arrives.
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 docker compose -f "$file" build redmine
-docker compose -f "$file" run --rm --use-aliases -e ULYSSES_SNAPSHOT="${ULYSSES_SNAPSHOT:-}" redmine \
-  bin/rake redmine:plugins:test NAME=redmine_ulysses "$@"
+docker compose -f "$file" run --rm -T --use-aliases -e ULYSSES_SNAPSHOT="${ULYSSES_SNAPSHOT:-}" redmine \
+  bin/rake redmine:plugins:test NAME=redmine_ulysses "$@" &
+wait $!
