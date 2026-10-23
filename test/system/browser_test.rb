@@ -55,6 +55,27 @@ class BrowserTest < UlyssesSystemTestCase
     assert_full_page_load
   end
 
+  # Turbo's own popstate listener would answer Back with a restoration visit, which swaps the
+  # body for a snapshot and loses whatever was typed. A marker on the body survives only if the
+  # body is never replaced.
+  def test_back_and_forward_over_a_fragment_keep_the_page
+    log_user('jsmith', 'jsmith')
+    visit '/issues/1'
+    wait_for_ulysses
+    page.first(:link, 'Edit').click
+    fill_in 'issue_notes', with: 'Unsaved'
+    page.execute_script('document.body.ulyssesMarker = true')
+    page.execute_script("location.hash = 'note-1'")
+    assert_equal '#note-1', page.evaluate_script('location.hash')
+    page.go_back
+    assert_equal '', page.evaluate_script('location.hash')
+    assert_body_kept_with_notes 'Unsaved'
+    page.go_forward
+    assert_equal '#note-1', page.evaluate_script('location.hash')
+    assert_body_kept_with_notes 'Unsaved'
+    assert_equal 'auto', page.evaluate_script('history.scrollRestoration')
+  end
+
   def test_core_form_is_a_full_page_load
     log_user('jsmith', 'jsmith')
     visit '/issues/1'

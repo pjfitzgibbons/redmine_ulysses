@@ -14,6 +14,13 @@ class UlyssesSystemTestCase < ApplicationSystemTestCase
     assert_not page.evaluate_script('window.ulyssesMarker === true'), 'expected a full page load'
   end
 
+  # A restoration visit is asynchronous, so give it time to replace the body before checking.
+  def assert_body_kept_with_notes(notes)
+    sleep 0.5
+    assert page.evaluate_script('document.body.ulyssesMarker === true'), 'the body was replaced'
+    assert_field 'issue_notes', with: notes
+  end
+
   def wait_for_ulysses
     deadline = Time.now + Capybara.default_max_wait_time
     sleep 0.05 until turbo_loaded? || Time.now > deadline
