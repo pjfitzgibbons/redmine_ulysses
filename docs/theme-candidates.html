@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The candidates the reference theme was chosen from (#94): palette A, Velvet and cerulean, with
+     IBM Plex. Kept as a record of the choice; docs/design-book.html shows the theme as it is. The
+     fonts load from Google Fonts here only, for the preview. -->
+<title>Ulysses Theme Candidates</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono&family=IBM+Plex+Serif:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;600&family=Atkinson+Hyperlegible+Mono&family=Literata:opsz,wght@7..72,400;7..72,600&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Public+Sans:wght@400;600&family=JetBrains+Mono&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap">
+<style>
+/* Layout: one column of candidate sections; each shows a palette as a Redmine issue page, light beside dark. */
+:root {
+  --bg: #f4f6f9; --panel: #ffffff; --fg: #121722; --dim: #4a5568; --line: #d5dbe4; --pick: #0b5aa8;
+  --ok: #1b6a2e; --bad: #ac1f29;
+  --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b0e14; --panel: #121722; --fg: #e8edf5; --dim: #a7b2c3; --line: #2a3345; --pick: #62b6ff; --ok: #72d68d; --bad: #ff8a90; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b0e14; --panel: #121722; --fg: #e8edf5; --dim: #a7b2c3; --line: #2a3345; --pick: #62b6ff; --ok: #72d68d; --bad: #ff8a90; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--sans); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 30px; font-weight: 600; }
+h2 { font-size: 22px; font-weight: 600; }
+h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 10px; }
+.lede p { color: var(--dim); }
+code { font-family: var(--mono); font-size: .92em; }
+.block { display: grid; gap: 16px; }
+.fonts { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.font { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); cursor: pointer; }
+.font:has(input:checked) { border-color: var(--pick); box-shadow: 0 0 0 1px var(--pick); }
+.font:has(input:focus-visible) { outline: 2px solid var(--pick); outline-offset: 2px; }
+.font input { position: absolute; opacity: 0; pointer-events: none; }
+.font .label { font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+.font .s { font-size: 17px; } .font .m { font-size: 13px; } .font .r { font-size: 17px; font-style: italic; }
+.font .why { font-size: 13px; color: var(--dim); }
+.pal { display: grid; gap: 14px; padding-top: 24px; border-top: 1px solid var(--line); }
+.pal-head { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; justify-content: space-between; }
+.pal-head p { color: var(--dim); }
+.mocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 4px; }
+.sw { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--line); }
+details { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; }
+summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 10px; }
+.tables > div { min-width: 0; overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13px; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td.n { text-align: right; }
+.pass { color: var(--ok); } .fail { color: var(--bad); font-weight: 600; }
+.chip { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; border: 1px solid var(--line); }
+
+/* The mock Redmine page draws only from the candidate's --u-* values. */
+.mock { min-width: 0; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); background: var(--u-page); color: var(--u-ink);
+  font: 13px/1.5 var(--f-sans); }
+.mock .mode { font: 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .1em; padding: 6px 12px; background: var(--u-sunk); color: var(--u-faint); }
+.mock header { background: linear-gradient(100deg, var(--u-header-from), var(--u-header-to)); color: var(--u-on-header); padding: 12px 14px 0; }
+.mock .proj { font-size: 20px; font-weight: 600; font-family: var(--f-serif); }
+.mock nav { display: flex; gap: 2px; margin-top: 10px; flex-wrap: wrap; }
+.mock nav span { padding: 5px 10px; font-size: 12px; border-radius: 4px 4px 0 0; }
+.mock nav .on { background: var(--u-page); color: var(--u-ink); font-weight: 600; }
+.mock main { padding: 14px; display: grid; gap: 12px; }
+.mock .flash { padding: 7px 10px; border-radius: 4px; font-size: 12px; }
+.mock .issue { background: var(--u-surface); border: 1px solid var(--u-rule); border-radius: 6px; padding: 12px; display: grid; gap: 10px; }
+.mock .subj { font: 600 17px/1.3 var(--f-serif); }
+.mock .meta { color: var(--u-faint); font-size: 12px; }
+.mock .attrs { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 12px; }
+.mock .attrs dt { color: var(--u-muted); font-weight: 600; } .mock .attrs dd { margin: 0; }
+.mock .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.mock a { color: var(--u-primary); text-decoration: underline; text-underline-offset: 2px; }
+.mock pre { margin: 0; padding: 8px 10px; background: var(--u-sunk); border-radius: 4px; font: 12px/1.45 var(--f-mono); color: var(--u-ink); overflow-x: auto; }
+.mock .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.mock button { font: 600 12px/1 var(--f-sans); padding: 7px 12px; border-radius: 4px; border: 1px solid var(--u-rule); background: var(--u-surface); color: var(--u-ink); }
+.mock button.primary { background: var(--u-primary-fill); border-color: var(--u-primary-fill); color: var(--u-on-primary); }
+.mock button.focus { outline: 2px solid var(--u-focus); outline-offset: 2px; }
+.mock .stripe { height: 3px; background: var(--u-accent); }
+.foot { color: var(--dim); font-size: 13px; display: grid; gap: 6px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="lede">
+    <h1>Ulysses theme candidates</h1>
+    <p>Four palettes from <i>Papilio ulysses</i>, the blue swallowtail, and four sets of OFL fonts, for the reference <code>tokens.css</code> (Redmine #94). Pick one font set below and every page mock-up switches to it. Then pick a palette. The final values can still be adjusted after you choose.</p>
+    <p>Every palette already passes the checks in #94's Done list: every text and ground pair is at least 4.5:1, and white header text on both ends of the gradient is at least 5.6:1, in light and in dark. Each palette's full contrast table is under its mock-ups.</p>
+  </div>
+
+  <section class="block">
+    <h3>Fonts: sans, mono and serif</h3>
+    <div class="fonts" id="fonts"></div>
+  </section>
+
+  <section class="block" id="palettes"></section>
+
+  <div class="foot">
+    <p>Roles follow design 0004 §3.8: ink, muted and faint text; page, surface and sunk grounds; rule; primary and its fill; accent; focus; ok, warn, danger and info, each as ink on soft; and the header gradient with its text.</p>
+    <p>Fonts here come from Google Fonts for the preview only. The chosen set will be vendored into the plugin as WOFF2 files with its OFL licence, with no font CDN.</p>
+  </div>
+</div>
+
+<script>
+const P = {
+ "velvet": {
+  "name": "Velvet and cerulean",
+  "note": "The upper wing: black velvet margins around the cerulean patch. Cool blue-grey neutrals.",
+  "light": {
+   "page": "#f5f7fa",
+   "surface": "#ffffff",
+   "sunk": "#e9edf3",
+   "rule": "#ccd4e0",
+   "ink": "#0d1321",
+   "muted": "#3d4859",
+   "faint": "#566173",
+   "primary": "#0b5aa8",
+   "primary_fill": "#0b5aa8",
+   "on_primary": "#ffffff",
+   "accent": "#1798d4",
+   "focus": "#1798d4",
+   "ok_ink": "#1b6a2e",
+   "ok_soft": "#e1f3e5",
+   "warn_ink": "#7a4f00",
+   "warn_soft": "#fcefd0",
+   "danger_ink": "#ac1f29",
+   "danger_soft": "#fbe3e4",
+   "info_ink": "#0b5aa8",
+   "info_soft": "#e2edfa",
+   "header_from": "#05070d",
+   "header_to": "#0a4e9b",
+   "on_header": "#ffffff"
+  },
+  "dark": {
+   "page": "#0b0e14",
+   "surface": "#121722",
+   "sunk": "#07090d",
+   "rule": "#2a3345",
+   "ink": "#e8edf5",
+   "muted": "#b0bbcc",
+   "faint": "#8c98ab",
+   "primary": "#62b6ff",
+   "primary_fill": "#1c69bd",
+   "on_primary": "#ffffff",
+   "accent": "#38c3ff",
+   "focus": "#38c3ff",
+   "ok_ink": "#72d68d",
+   "ok_soft": "#12301b",
+   "warn_ink": "#f2c450",
+   "warn_soft": "#33280b",
+   "danger_ink": "#ff8a90",
+   "danger_soft": "#3c1418",
+   "info_ink": "#7cc4ff",
+   "info_soft": "#0f2643",
+   "header_from": "#000000",
+   "header_to": "#0a3d7d",
+   "on_header": "#ffffff"
+  }
+ },
+ "sheen": {
+  "name": "Iridescent sheen",
+  "note": "The wing seen at an angle, where the blue turns green-teal. Neutrals lean blue-green.",
+  "light": {
+   "page": "#f3f7f7",
+   "surface": "#ffffff",
+   "sunk": "#e5eeef",
+   "rule": "#c6d6d8",
+   "ink": "#0b1a1e",
+   "muted": "#36494e",
+   "faint": "#506369",
+   "primary": "#066a82",
+   "primary_fill": "#066a82",
+   "on_primary": "#ffffff",
+   "accent": "#1fb3bf",
+   "focus": "#1fa4b0",
+   "ok_ink": "#1d6a2c",
+   "ok_soft": "#e0f2e3",
+   "warn_ink": "#7a4f00",
+   "warn_soft": "#fbefcf",
+   "danger_ink": "#ab1e2b",
+   "danger_soft": "#fbe2e4",
+   "info_ink": "#155c9e",
+   "info_soft": "#e1ecf8",
+   "header_from": "#03141a",
+   "header_to": "#085f78",
+   "on_header": "#ffffff"
+  },
+  "dark": {
+   "page": "#081114",
+   "surface": "#0f1b20",
+   "sunk": "#050b0d",
+   "rule": "#24383e",
+   "ink": "#e5f0f2",
+   "muted": "#a9bec3",
+   "faint": "#86a0a6",
+   "primary": "#4fd0dd",
+   "primary_fill": "#07708a",
+   "on_primary": "#ffffff",
+   "accent": "#4fd0dd",
+   "focus": "#4fd0dd",
+   "ok_ink": "#74d68a",
+   "ok_soft": "#11301a",
+   "warn_ink": "#f0c24e",
+   "warn_soft": "#32280b",
+   "danger_ink": "#ff8a92",
+   "danger_soft": "#3b1419",
+   "info_ink": "#80c2ff",
+   "info_soft": "#0f2540",
+   "header_from": "#000000",
+   "header_to": "#06526a",
+   "on_header": "#ffffff"
+  }
+ },
+ "underwing": {
+  "name": "Underwing",
+  "note": "The underside: brown-black ground dusted with grey-blue scales. Warm neutrals, a quieter blue.",
+  "light": {
+   "page": "#f6f5f3",
+   "surface": "#ffffff",
+   "sunk": "#ecebe7",
+   "rule": "#d6d3cc",
+   "ink": "#1a1612",
+   "muted": "#4a443c",
+   "faint": "#615a51",
+   "primary": "#2b5590",
+   "primary_fill": "#2b5590",
+   "on_primary": "#ffffff",
+   "accent": "#6f93c4",
+   "focus": "#3f73c0",
+   "ok_ink": "#2a6b2c",
+   "ok_soft": "#e4f1e1",
+   "warn_ink": "#7d4d00",
+   "warn_soft": "#f9eccd",
+   "danger_ink": "#a8232b",
+   "danger_soft": "#f8e2e1",
+   "info_ink": "#2b5590",
+   "info_soft": "#e4ebf5",
+   "header_from": "#18130e",
+   "header_to": "#2a4c86",
+   "on_header": "#ffffff"
+  },
+  "dark": {
+   "page": "#12100d",
+   "surface": "#1b1814",
+   "sunk": "#0c0a08",
+   "rule": "#353029",
+   "ink": "#efebe5",
+   "muted": "#c0b8ac",
+   "faint": "#9c9488",
+   "primary": "#93b6e8",
+   "primary_fill": "#2f5c9c",
+   "on_primary": "#ffffff",
+   "accent": "#93b6e8",
+   "focus": "#93b6e8",
+   "ok_ink": "#80d184",
+   "ok_soft": "#1a2c16",
+   "warn_ink": "#efc25a",
+   "warn_soft": "#33270c",
+   "danger_ink": "#ff8f8f",
+   "danger_soft": "#3a1716",
+   "info_ink": "#93b6e8",
+   "info_soft": "#18243a",
+   "header_from": "#0a0806",
+   "header_to": "#223e70",
+   "on_header": "#ffffff"
+  }
+ },
+ "electric": {
+  "name": "Electric blue",
+  "note": "The patch in full sun: a saturated ultramarine, with the header running from ink-violet to it.",
+  "light": {
+   "page": "#f5f6fb",
+   "surface": "#ffffff",
+   "sunk": "#e9ebf6",
+   "rule": "#cdd1e6",
+   "ink": "#0e1030",
+   "muted": "#3c4066",
+   "faint": "#555a80",
+   "primary": "#2440c2",
+   "primary_fill": "#2440c2",
+   "on_primary": "#ffffff",
+   "accent": "#0aa6f0",
+   "focus": "#2f6bff",
+   "ok_ink": "#16692f",
+   "ok_soft": "#dff3e4",
+   "warn_ink": "#7a4e00",
+   "warn_soft": "#fcefcf",
+   "danger_ink": "#b01c2e",
+   "danger_soft": "#fbe2e6",
+   "info_ink": "#0a5fa8",
+   "info_soft": "#e0edfa",
+   "header_from": "#0a0b2a",
+   "header_to": "#2a3fc8",
+   "on_header": "#ffffff"
+  },
+  "dark": {
+   "page": "#0a0b18",
+   "surface": "#121427",
+   "sunk": "#06070f",
+   "rule": "#2a2e4d",
+   "ink": "#e9eaf8",
+   "muted": "#b3b6d6",
+   "faint": "#8e92b8",
+   "primary": "#8fa2ff",
+   "primary_fill": "#3048cc",
+   "on_primary": "#ffffff",
+   "accent": "#3cc4ff",
+   "focus": "#8fa2ff",
+   "ok_ink": "#6fd68e",
+   "ok_soft": "#10301c",
+   "warn_ink": "#f2c44e",
+   "warn_soft": "#33290b",
+   "danger_ink": "#ff8a99",
+   "danger_soft": "#3d131c",
+   "info_ink": "#7cc4ff",
+   "info_soft": "#0f2443",
+   "header_from": "#03030c",
+   "header_to": "#22339e",
+   "on_header": "#ffffff"
+  }
+ }
+};
+const FONTS = [
+  { id: "plex", name: "IBM Plex", sans: "IBM Plex Sans", mono: "IBM Plex Mono", serif: "IBM Plex Serif",
+    why: "One family in three styles, built for interfaces. Neutral, slightly technical." },
+  { id: "atkinson", name: "Atkinson Hyperlegible + Literata", sans: "Atkinson Hyperlegible Next", mono: "Atkinson Hyperlegible Mono", serif: "Literata",
+    why: "Drawn for low-vision readers: I, l and 1 are clearly different. Literata is a screen serif." },
+  { id: "source", name: "Source 3 / 4", sans: "Source Sans 3", mono: "Source Code Pro", serif: "Source Serif 4",
+    why: "Adobe's family. Fits more on a line, which suits dense issue lists." },
+  { id: "public", name: "Public Sans + JetBrains Mono + Newsreader", sans: "Public Sans", mono: "JetBrains Mono", serif: "Newsreader",
+    why: "Plain US-government sans. The mono is easy to read in code, and the serif feels editorial." },
+];
+const ROLES = ["page","surface","sunk","rule","ink","muted","faint","primary","primary_fill","accent","focus",
+  "ok_ink","ok_soft","warn_ink","warn_soft","danger_ink","danger_soft","info_ink","info_soft","header_from","header_to","on_header"];
+
+function lum(h){ const c=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(x=>x<=0.04045?x/12.92:((x+0.055)/1.055)**2.4); return .2126*c[0]+.7152*c[1]+.0722*c[2]; }
+function cr(a,b){ const [x,y]=[lum(a),lum(b)].sort((p,q)=>q-p); return (x+.05)/(y+.05); }
+function pairs(){ const o=[];
+  for (const t of ["ink","muted","faint","primary"]) for (const g of ["page","surface","sunk"]) o.push([t,g,4.5]);
+  for (const r of ["ok","warn","danger","info"]) for (const g of [r+"_soft","surface","page"]) o.push([r+"_ink",g,4.5]);
+  o.push(["on_primary","primary_fill",4.5],["on_header","header_from",5.6],["on_header","header_to",5.6]); return o; }
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const vars = m => Object.entries(m).map(([k,v]) => `--u-${k.replace(/_/g,"-")}:${v}`).join(";");
+
+function mock(m, mode){
+  const pill = r => `background:var(--u-${r}-soft);color:var(--u-${r}-ink)`;
+  return `<div class="mock" style="${vars(m)}">
+    <div class="mode">${mode}</div>
+    <header><div class="proj">redmine_ulysses</div>
+      <nav><span>Overview</span><span>Activity</span><span class="on">Issues</span><span>Roadmap</span><span>Wiki</span></nav></header>
+    <div class="stripe"></div>
+    <main>
+      <div class="flash" style="${pill("ok")}">Successful update.</div>
+      <div class="issue">
+        <div class="subj">Feature #94: Define the Ulysses theme contract</div>
+        <div class="meta">Added by Peter Fitzgibbons 3 days ago. Updated 2 hours ago.</div>
+        <dl class="attrs">
+          <dt>Status</dt><dd><span class="pill" style="${pill("info")}">In Progress</span></dd>
+          <dt>Priority</dt><dd><span class="pill" style="${pill("warn")}">High</span></dd>
+          <dt>Blocks</dt><dd><a href="#">#95 Field groups</a></dd>
+          <dt>Tests</dt><dd><span class="pill" style="${pill("ok")}">passing</span> <span class="pill" style="${pill("danger")}">1 failed</span></dd>
+        </dl>
+        <p style="color:var(--u-muted)">A site's theme is one file, read from</p>
+        <pre>public/ulysses/theme.css
+--uly-primary: #0b5aa8; /* 0O 1lI */</pre>
+      </div>
+      <div class="flash" style="${pill("danger")}">Due date can't be earlier than the start date.</div>
+      <div class="btns"><button class="primary">Save</button><button class="focus">Preview</button><button>Cancel</button></div>
+    </main></div>`;
+}
+function table(m, mode){
+  const rows = pairs().map(([t,g,need]) => { const r = cr(m[t],m[g]); const ok = r >= need;
+    return `<tr><td><span class="chip" style="background:${m[t]}"></span>${t}</td><td><span class="chip" style="background:${m[g]}"></span>${g}</td>
+      <td class="n ${ok?"pass":"fail"}">${r.toFixed(2)}</td><td class="n">${need}</td></tr>`; }).join("");
+  return `<div><table><caption style="text-align:left;font-weight:600;padding-bottom:4px">${mode}</caption>
+    <thead><tr><th>Text</th><th>Ground</th><th class="n">Ratio</th><th class="n">Need</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function minRatio(m){ return Math.min(...pairs().map(([t,g]) => cr(m[t],m[g]))); }
+
+document.getElementById("fonts").innerHTML = FONTS.map((f,i) => `
+  <label class="font" for="font-${f.id}" style="--f-sans:'${f.sans}';--f-mono:'${f.mono}';--f-serif:'${f.serif}'">
+    <input type="radio" name="font" id="font-${f.id}" value="${f.id}" ${i?"":"checked"}>
+    <span class="label">${esc(f.name)}</span>
+    <span class="s" style="font-family:'${f.sans}',system-ui">Status: In Progress, 3 of 7 done</span>
+    <span class="m" style="font-family:'${f.mono}',ui-monospace">--uly-ink: #0d1321; 0O 1lI</span>
+    <span class="r" style="font-family:'${f.serif}',Georgia,serif">The blue swallowtail of Queensland</span>
+    <span class="why">${esc(f.why)}</span>
+  </label>`).join("");
+
+document.getElementById("palettes").innerHTML = Object.entries(P).map(([k,p],i) => `
+  <section class="pal" id="${k}">
+    <div class="pal-head"><h2>${String.fromCharCode(65+i)}. ${esc(p.name)}</h2>
+      <div class="swatches">${["header_from","header_to","primary","accent","page","ink","ok_ink","warn_ink","danger_ink"].map(r=>`<span class="sw" title="${r} ${p.light[r]}" style="background:${p.light[r]}"></span>`).join("")}</div></div>
+    <p>${esc(p.note)} Lowest text ratio: ${minRatio(p.light).toFixed(2)} light, ${minRatio(p.dark).toFixed(2)} dark. Header text: ${Math.min(cr(p.light.on_header,p.light.header_from),cr(p.light.on_header,p.light.header_to)).toFixed(2)} light, ${Math.min(cr(p.dark.on_header,p.dark.header_from),cr(p.dark.on_header,p.dark.header_to)).toFixed(2)} dark.</p>
+    <div class="mocks">${mock(p.light,"light")}${mock(p.dark,"dark")}</div>
+    <details><summary>Contrast, ${pairs().length} pairs in each mode</summary><div class="tables">${table(p.light,"Light")}${table(p.dark,"Dark")}</div></details>
+  </section>`).join("");
+
+function applyFont(){
+  const f = FONTS.find(x => x.id === document.querySelector('input[name="font"]:checked').value);
+  const r = document.getElementById("palettes").style;
+  r.setProperty("--f-sans", `'${f.sans}', system-ui, sans-serif`);
+  r.setProperty("--f-mono", `'${f.mono}', ui-monospace, monospace`);
+  r.setProperty("--f-serif", `'${f.serif}', Georgia, serif`);
+  try { localStorage.setItem("uly-font", f.id); } catch (e) {}
+}
+try { const saved = localStorage.getItem("uly-font"); if (saved) { const el = document.getElementById("font-"+saved); if (el) el.checked = true; } } catch (e) {}
+document.getElementById("fonts").addEventListener("change", applyFont);
+applyFont();
+</script>
+</body>
+</html>

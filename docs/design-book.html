@@ -1,0 +1,329 @@
+<!doctype html>
+<!--
+  Ulysses design book: every property of the reference theme, in light and dark, read from
+  assets/stylesheets/tokens.css as it is, with the vendored IBM Plex fonts. Nothing loads from the
+  network. Browsers don't let a page read a stylesheet's rules over file://, so serve the repo
+  root and open docs/design-book.html, e.g. `ruby -run -e httpd . -p 8000`.
+
+  Copyright (C) 2026 Peter Fitzgibbons. GPL-2.0-or-later; see LICENSE.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ulysses design book</title>
+<link rel="stylesheet" href="../assets/stylesheets/tokens.css">
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--uly-page);
+    color: var(--uly-ink);
+    font: var(--uly-text-base)/var(--uly-leading) var(--uly-font-sans);
+  }
+  header.book {
+    background: linear-gradient(100deg, var(--uly-header-from), var(--uly-header-to));
+    color: var(--uly-on-header);
+    padding: var(--uly-space-6) 16px;
+  }
+  header.book h1 { font: 600 2rem/var(--uly-leading-tight) var(--uly-font-serif); margin: 0 0 var(--uly-space-2); }
+  header.book p { margin: 0; max-width: 46rem; }
+  main { max-width: 76rem; margin: 0 auto; padding: var(--uly-space-5) 16px var(--uly-space-6); }
+  h2 { font: 600 var(--uly-text-2xl)/var(--uly-leading-tight) var(--uly-font-serif); margin: var(--uly-space-6) 0 var(--uly-space-2); }
+  h3 { font-size: var(--uly-text-lg); margin: var(--uly-space-5) 0 var(--uly-space-3); }
+  p.lede { color: var(--uly-muted); max-width: 46rem; margin-top: 0; }
+  code { font-family: var(--uly-font-mono); font-size: .92em; }
+  .error { background: var(--uly-danger-soft); color: var(--uly-danger-ink); padding: var(--uly-space-3) var(--uly-space-4); border-radius: var(--uly-radius); }
+
+  .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 32rem), 1fr)); gap: var(--uly-space-4); }
+  .mode {
+    background: var(--uly-page);
+    color: var(--uly-ink);
+    border: 1px solid var(--uly-rule);
+    border-radius: var(--uly-radius);
+    padding: var(--uly-space-4);
+    min-width: 0;
+  }
+  .mode > h3:first-child { margin-top: 0; }
+  .mode[data-mode="dark"] { color-scheme: dark; }
+  .mode[data-mode="light"] { color-scheme: light; }
+
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: var(--uly-space-2); margin-bottom: var(--uly-space-3); }
+  .swatch { background: var(--uly-surface); border: 1px solid var(--uly-rule); border-radius: var(--uly-radius-sm); overflow: hidden; font-size: var(--uly-text-xs); }
+  .swatch .chip { height: 2.5rem; border-bottom: 1px solid var(--uly-rule); }
+  .swatch .name { padding: var(--uly-space-1) var(--uly-space-2) 0; font-weight: 600; overflow-wrap: anywhere; }
+  .swatch .value { padding: 0 var(--uly-space-2) var(--uly-space-1); color: var(--uly-muted); font-family: var(--uly-font-mono); overflow-wrap: anywhere; }
+  .group { font-size: var(--uly-text-sm); color: var(--uly-muted); margin: var(--uly-space-3) 0 var(--uly-space-1); }
+
+  table.pairs { width: 100%; border-collapse: collapse; font-size: var(--uly-text-sm); }
+  table.pairs th, table.pairs td { text-align: left; padding: var(--uly-space-1) var(--uly-space-2); border-bottom: 1px solid var(--uly-rule); }
+  table.pairs th { color: var(--uly-muted); font-weight: 600; }
+  table.pairs td.sample { border-radius: var(--uly-radius-sm); font-weight: 600; white-space: nowrap; }
+  table.pairs td.ratio { font-family: var(--uly-font-mono); text-align: right; white-space: nowrap; }
+  .fail { color: var(--uly-danger-ink); font-weight: 700; }
+  .pairs-wrap { overflow-x: auto; }
+
+  .sample-ui { background: var(--uly-surface); border: 1px solid var(--uly-rule); border-radius: var(--uly-radius); box-shadow: var(--uly-shadow); overflow: hidden; }
+  .sample-ui .bar { background: linear-gradient(100deg, var(--uly-header-from), var(--uly-header-to)); color: var(--uly-on-header); padding: var(--uly-space-3) var(--uly-space-4); font: 600 var(--uly-text-xl) var(--uly-font-serif); }
+  .sample-ui .body { padding: var(--uly-space-4); display: grid; gap: var(--uly-space-3); }
+  .sample-ui .row { display: flex; flex-wrap: wrap; gap: var(--uly-space-2); align-items: center; }
+  .btn { font: 600 var(--uly-text-sm) var(--uly-font-sans); border-radius: var(--uly-radius); padding: var(--uly-space-2) var(--uly-space-4); border: 1px solid transparent; cursor: pointer; transition: background-color var(--uly-duration) var(--uly-easing); }
+  .btn.primary { background: var(--uly-primary-fill); color: var(--uly-on-primary); }
+  .btn.plain { background: var(--uly-sunk); color: var(--uly-ink); border-color: var(--uly-rule); }
+  .btn:focus-visible, .sample-ui a:focus-visible { outline: 2px solid var(--uly-focus); outline-offset: 2px; }
+  .pill { font-size: var(--uly-text-xs); font-weight: 700; border-radius: var(--uly-radius-pill); padding: 0 var(--uly-space-2); border: 1px solid currentColor; }
+  .flash { border-radius: var(--uly-radius-sm); padding: var(--uly-space-2) var(--uly-space-3); font-size: var(--uly-text-sm); }
+  .flash.ok { background: var(--uly-ok-soft); color: var(--uly-ok-ink); }
+  .flash.warn { background: var(--uly-warn-soft); color: var(--uly-warn-ink); }
+  .flash.danger { background: var(--uly-danger-soft); color: var(--uly-danger-ink); }
+  .flash.info { background: var(--uly-info-soft); color: var(--uly-info-ink); }
+  .sample-ui a { color: var(--uly-primary); }
+  .sample-ui .meta { color: var(--uly-muted); font-size: var(--uly-text-sm); }
+  .sample-ui .note { color: var(--uly-faint); font-size: var(--uly-text-xs); }
+  .sample-ui pre { background: var(--uly-sunk); border: 1px solid var(--uly-rule); border-radius: var(--uly-radius-sm); padding: var(--uly-space-2) var(--uly-space-3); margin: 0; font: var(--uly-text-sm)/var(--uly-leading) var(--uly-font-mono); overflow-x: auto; }
+
+  .scale { display: grid; gap: var(--uly-space-2); }
+  .scale .item { display: grid; grid-template-columns: 11rem 1fr; gap: var(--uly-space-3); align-items: center; }
+  .scale .label { font-size: var(--uly-text-xs); color: var(--uly-muted); font-family: var(--uly-font-mono); overflow-wrap: anywhere; white-space: pre-line; }
+  .space-bar { height: .75rem; background: var(--uly-accent); border-radius: 2px; }
+  .boxes { display: flex; flex-wrap: wrap; gap: var(--uly-space-4); }
+  .box { width: 9rem; height: 5rem; background: var(--uly-surface); border: 1px solid var(--uly-rule); display: grid; place-items: center; font-size: var(--uly-text-xs); color: var(--uly-muted); font-family: var(--uly-font-mono); text-align: center; padding: var(--uly-space-1); }
+  .motion .dot { width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--uly-primary); transform: translateX(0); }
+  .motion .track { background: var(--uly-sunk); border-radius: var(--uly-radius-pill); padding: 2px; width: 100%; max-width: 20rem; }
+  .motion .track:hover .dot, .motion .track:focus-within .dot { transform: translateX(calc(min(20rem, 100%) - 1.25rem - 4px)); }
+  @media (max-width: 40rem) { .scale .item { grid-template-columns: 1fr; gap: 0; } }
+</style>
+</head>
+<body>
+<header class="book">
+  <h1>Ulysses design book</h1>
+  <p>The reference theme, read live from <code>assets/stylesheets/tokens.css</code>: every
+  property of the <code>--uly-*</code> contract, in light and dark. A site's
+  <code>public/ulysses/theme.css</code> overrides any of them; the README's theme guide says how.</p>
+</header>
+<main>
+  <div id="error" class="error" hidden></div>
+
+  <h2>Colour</h2>
+  <p class="lede">Each colour role in both modes. A theme sets a role in <code>:root</code> for
+  light and again under <code>@media (prefers-color-scheme: dark)</code> for dark; a light value
+  the dark block leaves out applies in dark too.</p>
+  <div class="modes" data-part="colours"></div>
+
+  <h2>Contrast</h2>
+  <p class="lede">The pairs the theme check measures, as in <code>RedmineUlysses::Theme::PAIRS</code>:
+  text on its grounds at 4.5:1 or better, and header text at 5.6:1.
+  <code>bin/rake redmine_ulysses:theme:check[FILE]</code> fails a theme under either.</p>
+  <div class="modes" data-part="pairs"></div>
+
+  <h2>In use</h2>
+  <p class="lede">The roles together, the way Redmine's header, buttons, flashes and text use them.</p>
+  <div class="modes" data-part="sample"></div>
+
+  <h2>Type</h2>
+  <p class="lede">IBM Plex, vendored under the SIL Open Font License: Sans for text, Serif for the
+  project name in the header, Mono for code.</p>
+  <div class="scale" id="fonts"></div>
+  <h3>Sizes</h3>
+  <div class="scale" id="sizes"></div>
+
+  <h2>Space, corners and shadows</h2>
+  <div class="scale" id="spaces"></div>
+  <h3>Corners and shadows</h3>
+  <div class="boxes" id="boxes"></div>
+
+  <h2>Motion</h2>
+  <p class="lede">Hover or focus a track to see each duration with the easing. Under
+  <code>prefers-reduced-motion: reduce</code> both durations are 0ms.</p>
+  <div class="scale motion" id="motion"></div>
+</main>
+
+<template id="colours">
+  <h3></h3>
+  <div data-groups></div>
+</template>
+
+<template id="sample">
+  <h3></h3>
+  <div class="sample-ui">
+    <div class="bar">eCookbook</div>
+    <div class="body">
+      <div class="row"><strong>Bug #1</strong> <span class="pill" style="color: var(--uly-info-ink)">OPEN</span></div>
+      <div class="meta">Added by <a href="#">John Smith</a> 3 days ago.</div>
+      <div>Unable to print recipes. See <a href="#">the printing guide</a> first.</div>
+      <div class="flash ok">Successful update.</div>
+      <div class="flash warn">This issue is due tomorrow.</div>
+      <div class="flash danger">Subject cannot be blank.</div>
+      <div class="flash info">Your changes will be sent to 3 watchers.</div>
+      <pre>bin/rake redmine_ulysses:theme:check</pre>
+      <div class="row"><button class="btn primary" type="button">Submit</button><button class="btn plain" type="button">Preview</button></div>
+      <div class="note">Faint text, for hints and footnotes.</div>
+    </div>
+  </div>
+</template>
+
+<script>
+  const GROUPS = [
+    ['Text', ['ink', 'muted', 'faint']],
+    ['Grounds and rules', ['page', 'surface', 'sunk', 'rule']],
+    ['Brand', ['primary', 'primary-fill', 'on-primary', 'accent', 'focus']],
+    ['Status', ['ok-ink', 'ok-soft', 'warn-ink', 'warn-soft', 'danger-ink', 'danger-soft', 'info-ink', 'info-soft']],
+    ['Header', ['header-from', 'header-to', 'on-header']]
+  ];
+  const TEXT = 4.5, HEADER = 5.6;
+  const PAIRS = [
+    ...['ink', 'muted', 'faint', 'primary'].flatMap(t => ['page', 'surface', 'sunk'].map(g => [t, g, TEXT])),
+    ...['ok', 'warn', 'danger', 'info'].flatMap(r => [`${r}-soft`, 'surface', 'page'].map(g => [`${r}-ink`, g, TEXT])),
+    ['on-primary', 'primary-fill', TEXT],
+    ['on-header', 'header-from', HEADER],
+    ['on-header', 'header-to', HEADER]
+  ];
+
+  // The reference's light and dark values, from the stylesheet's own rules.
+  function readTokens() {
+    const sheet = [...document.styleSheets].find(s => s.href && s.href.endsWith('/tokens.css'));
+    if (!sheet) throw new Error('tokens.css did not load.');
+    const light = {}, dark = {}, motion = {};
+    const take = (rule, into) => {
+      if (rule.selectorText !== ':root') return;
+      for (const name of rule.style) if (name.startsWith('--uly-')) into[name] = rule.style.getPropertyValue(name).trim();
+    };
+    for (const rule of sheet.cssRules) {
+      take(rule, light);
+      const media = rule.media ? rule.media.mediaText : '';
+      if (/prefers-color-scheme:\s*dark/.test(media)) for (const r of rule.cssRules) take(r, dark);
+      if (/prefers-reduced-motion/.test(media)) for (const r of rule.cssRules) take(r, motion);
+    }
+    return { light, dark: { ...light, ...dark }, motion };
+  }
+
+  const el = (tag, props = {}, ...children) => {
+    const node = Object.assign(document.createElement(tag), props);
+    node.append(...children);
+    return node;
+  };
+
+  function rgb(scope, name) {
+    const probe = el('span');
+    probe.style.color = `var(--uly-${name})`;
+    scope.append(probe);
+    const parts = getComputedStyle(probe).color.match(/[\d.]+/g).slice(0, 3).map(Number);
+    probe.remove();
+    return parts;
+  }
+  function luminance([r, g, b]) {
+    const lin = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  }
+  function contrast(a, b) {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  // A panel per mode, its properties set on the panel itself so light and dark sit side by side.
+  function panel(part, mode, values) {
+    const section = el('section', { className: 'mode' });
+    section.dataset.mode = mode;
+    for (const [name, value] of Object.entries(values)) section.style.setProperty(name, value);
+    document.querySelector(`[data-part="${part}"]`).append(section);
+    return section;
+  }
+
+  function colours(section, mode, values) {
+    section.append(el('h3', { textContent: mode === 'light' ? 'Light' : 'Dark' }));
+    const named = new Set(GROUPS.flatMap(([, names]) => names));
+    const others = Object.keys(values).map(n => n.slice(6))
+      .filter(n => !named.has(n) && /^(#|rgb|var\(--uly-(?!font|text|space|radius|shadow|duration|easing|leading))/.test(values[`--uly-${n}`]));
+    for (const [title, names] of [...GROUPS, ...(others.length ? [['Not in a group', others]] : [])]) {
+      section.append(el('div', { className: 'group', textContent: title }));
+      const grid = el('div', { className: 'swatches' });
+      for (const name of names) {
+        const chip = el('div', { className: 'chip' });
+        chip.style.background = `var(--uly-${name})`;
+        grid.append(el('div', { className: 'swatch' }, chip,
+          el('div', { className: 'name', textContent: `--uly-${name}` }),
+          el('div', { className: 'value', textContent: values[`--uly-${name}`] ?? 'not set' })));
+      }
+      section.append(grid);
+    }
+  }
+
+  function pairs(section, mode) {
+    section.append(el('h3', { textContent: mode === 'light' ? 'Light' : 'Dark' }));
+    const body = el('tbody');
+    for (const [text, ground, need] of PAIRS) {
+      const ratio = contrast(rgb(section, text), rgb(section, ground));
+      const sample = el('td', { className: 'sample', textContent: 'Aa Issue #94' });
+      sample.style.color = `var(--uly-${text})`;
+      sample.style.background = `var(--uly-${ground})`;
+      const verdict = el('td', { className: 'ratio' }, `${ratio.toFixed(2)}:1`);
+      if (ratio < need) verdict.append(' ', el('span', { className: 'fail', textContent: `under ${need}` }));
+      body.append(el('tr', {}, sample,
+        el('td', {}, el('code', { textContent: text }), ' on ', el('code', { textContent: ground })),
+        verdict));
+    }
+    const head = el('thead', {}, el('tr', {}, el('th', { textContent: 'Sample' }), el('th', { textContent: 'Pair' }),
+      el('th', { textContent: 'Ratio', style: 'text-align: right' })));
+    section.append(el('div', { className: 'pairs-wrap' }, el('table', { className: 'pairs' }, head, body)));
+  }
+
+  function sample(section, mode) {
+    const node = document.getElementById('sample').content.cloneNode(true);
+    node.querySelector('h3').textContent = mode === 'light' ? 'Light' : 'Dark';
+    section.append(node);
+  }
+
+  function scale(id, items) {
+    const box = document.getElementById(id);
+    for (const [label, node] of items) box.append(el('div', { className: 'item' }, el('div', { className: 'label', textContent: label }), node));
+  }
+
+  function shared(values, motion) {
+    const text = (style, words) => { const n = el('div', { textContent: words }); Object.assign(n.style, style); return n; };
+    scale('fonts', [
+      [`--uly-font-sans\n${values['--uly-font-sans']}`, text({ fontFamily: 'var(--uly-font-sans)', fontSize: 'var(--uly-text-lg)' }, 'Sans: The quick brown fox jumps over the lazy dog. Bold, italic, 0123456789.')],
+      ['--uly-font-serif', text({ fontFamily: 'var(--uly-font-serif)', fontSize: 'var(--uly-text-2xl)', fontWeight: 600 }, 'eCookbook, in the header')],
+      ['--uly-font-mono', text({ fontFamily: 'var(--uly-font-mono)' }, 'def check(css) = errors.uniq # 0O 1lI')]
+    ]);
+    scale('sizes', ['xs', 'sm', 'base', 'lg', 'xl', '2xl'].map(s => [`--uly-text-${s}  ${values[`--uly-text-${s}`]}`,
+      text({ fontSize: `var(--uly-text-${s})`, lineHeight: 'var(--uly-leading-tight)' }, 'Cannot print recipes')]).concat([
+      [`--uly-leading  ${values['--uly-leading']}\n--uly-leading-tight  ${values['--uly-leading-tight']}`,
+        text({ maxWidth: '32rem' }, 'Body text sits at the body leading, so a long description wraps onto lines that stay easy to follow; headings use the tight leading.')]
+    ]));
+    scale('spaces', [1, 2, 3, 4, 5, 6].map(n => {
+      const bar = el('div', { className: 'space-bar' });
+      bar.style.width = `var(--uly-space-${n})`;
+      return [`--uly-space-${n}  ${values[`--uly-space-${n}`]}`, bar];
+    }));
+    const boxes = document.getElementById('boxes');
+    for (const [prop, name] of [['borderRadius', 'radius-sm'], ['borderRadius', 'radius'], ['borderRadius', 'radius-pill'], ['boxShadow', 'shadow'], ['boxShadow', 'shadow-raised']]) {
+      const b = el('div', { className: 'box', textContent: `--uly-${name}` });
+      b.style[prop] = `var(--uly-${name})`;
+      boxes.append(b);
+    }
+    scale('motion', ['duration', 'duration-slow'].map(name => {
+      const dot = el('div', { className: 'dot' });
+      dot.style.transition = `transform var(--uly-${name}) var(--uly-easing)`;
+      const reduced = motion[`--uly-${name}`] ? `, reduced ${motion[`--uly-${name}`]}` : '';
+      return [`--uly-${name}  ${values[`--uly-${name}`]}${reduced}\n--uly-easing  ${values['--uly-easing']}`,
+        el('div', { className: 'track', tabIndex: 0 }, dot)];
+    }));
+  }
+
+  try {
+    const { light, dark, motion } = readTokens();
+    for (const [mode, values] of [['light', light], ['dark', dark]]) {
+      colours(panel('colours', mode, values), mode, values);
+      pairs(panel('pairs', mode, values), mode);
+      sample(panel('sample', mode, values), mode);
+    }
+    shared(light, motion);
+  } catch (e) {
+    const box = document.getElementById('error');
+    box.hidden = false;
+    box.textContent = `Couldn't read tokens.css (${e.message}). Serve the repo root over http and open docs/design-book.html; browsers don't let a page read a stylesheet's rules over file://.`;
+  }
+</script>
+</body>
+</html>
