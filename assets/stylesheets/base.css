@@ -1,0 +1,139 @@
+/*
+ * Redmine's look, drawn from the theme contract. Core's stylesheet builds its colours from Open
+ * Color's --oc-* variables and its font from --fonts-main; this file points those at --uly-*
+ * properties, then restyles the few places where core uses a colour literal or reads a ground as
+ * text. It sets no colour, font or size of its own: every one comes from tokens.css or the site's
+ * theme.css, which load around it.
+ *
+ * Copyright (C) 2026 Peter Fitzgibbons. GPL-2.0-or-later; see LICENSE.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --fonts-main: var(--uly-font-sans);
+  --color-top-menu-background: var(--uly-header-from);
+  --color-header-background: var(--uly-header-to);
+  --color-current-marker: var(--uly-accent);
+
+  /* Grounds, rules and text. Core reads white as a ground, and as text only on a fill below. */
+  --oc-white: var(--uly-surface);
+  --oc-black: var(--uly-ink);
+  --oc-gray-0: var(--uly-page);
+  --oc-gray-1: var(--uly-sunk);
+  --oc-gray-2: var(--uly-sunk);
+  --oc-gray-3: var(--uly-rule);
+  --oc-gray-4: var(--uly-rule);
+  --oc-gray-5: var(--uly-faint);
+  --oc-gray-6: var(--uly-faint);
+  --oc-gray-7: var(--uly-muted);
+  --oc-gray-8: var(--uly-ink);
+  --oc-gray-9: var(--uly-ink);
+
+  /* Hues. Shades 0 to 3 are grounds and take a soft shade; the rest are text, rules or fills
+     under white text, and take an ink, which reads on the surface white now stands for. */
+  --oc-blue-0: var(--uly-info-soft);
+  --oc-blue-1: var(--uly-info-soft);
+  --oc-blue-2: var(--uly-info-soft);
+  --oc-blue-3: var(--uly-info-soft);
+  --oc-blue-4: var(--uly-accent);
+  --oc-blue-5: var(--uly-accent);
+  --oc-blue-6: var(--uly-primary);
+  --oc-blue-7: var(--uly-primary);
+  --oc-blue-8: var(--uly-primary);
+  --oc-blue-9: var(--uly-primary);
+  --oc-indigo-0: var(--uly-info-soft);
+  --oc-indigo-1: var(--uly-info-soft);
+  --oc-indigo-2: var(--uly-info-soft);
+  --oc-indigo-3: var(--uly-info-soft);
+  --oc-indigo-4: var(--uly-accent);
+  --oc-indigo-5: var(--uly-accent);
+  --oc-indigo-6: var(--uly-primary);
+  --oc-indigo-7: var(--uly-primary);
+  --oc-indigo-8: var(--uly-primary);
+  --oc-indigo-9: var(--uly-primary);
+  --oc-violet-0: var(--uly-info-soft);
+  --oc-violet-1: var(--uly-info-soft);
+  --oc-cyan-6: var(--uly-info-ink);
+  --oc-grape-7: var(--uly-primary);
+  --oc-grape-9: var(--uly-primary);
+  --oc-red-0: var(--uly-danger-soft);
+  --oc-red-1: var(--uly-danger-soft);
+  --oc-red-2: var(--uly-danger-soft);
+  --oc-red-3: var(--uly-danger-soft);
+  --oc-red-4: var(--uly-danger-ink);
+  --oc-red-5: var(--uly-danger-ink);
+  --oc-red-6: var(--uly-danger-ink);
+  --oc-red-7: var(--uly-danger-ink);
+  --oc-red-8: var(--uly-danger-ink);
+  --oc-red-9: var(--uly-danger-ink);
+  --oc-pink-5: var(--uly-danger-ink);
+  --oc-pink-9: var(--uly-danger-ink);
+  --oc-green-0: var(--uly-ok-soft);
+  --oc-green-1: var(--uly-ok-soft);
+  --oc-green-2: var(--uly-ok-soft);
+  --oc-green-3: var(--uly-ok-soft);
+  --oc-green-4: var(--uly-ok-ink);
+  --oc-green-5: var(--uly-ok-ink);
+  --oc-green-6: var(--uly-ok-ink);
+  --oc-green-7: var(--uly-ok-ink);
+  --oc-green-8: var(--uly-ok-ink);
+  --oc-green-9: var(--uly-ok-ink);
+  --oc-yellow-0: var(--uly-warn-soft);
+  --oc-yellow-1: var(--uly-warn-soft);
+  --oc-yellow-2: var(--uly-warn-soft);
+  --oc-yellow-3: var(--uly-warn-soft);
+  --oc-yellow-4: var(--uly-warn-ink);
+  --oc-yellow-7: var(--uly-warn-ink);
+  --oc-yellow-8: var(--uly-warn-ink);
+  --oc-yellow-9: var(--uly-warn-ink);
+  --oc-orange-1: var(--uly-warn-soft);
+  --oc-orange-6: var(--uly-warn-ink);
+  --oc-orange-7: var(--uly-warn-ink);
+  --oc-orange-9: var(--uly-warn-ink);
+}
+
+body {
+  background: var(--uly-page);
+  color: var(--uly-ink);
+  line-height: var(--uly-leading);
+}
+#wrapper, div#sticky-issue-header, div.tabs-buttons { background: var(--uly-surface); }
+/* Core draws the issue on its pale yellow, which is warn-soft here; the issue isn't a warning. */
+div.issue { background: var(--uly-page); border: 1px solid var(--uly-rule); }
+pre, code, tt, kbd, samp { font-family: var(--uly-font-mono); }
+
+a:hover, a:active { color: var(--uly-primary); }
+:focus-visible { outline: 2px solid var(--uly-focus); outline-offset: 2px; }
+
+/* The header and the top menu, as one gradient from the velvet edge to the wing's blue. */
+nav.top-menu { background: var(--uly-header-from); color: var(--uly-on-header); }
+#header {
+  background: linear-gradient(100deg, var(--uly-header-from), var(--uly-header-to));
+  color: var(--uly-on-header);
+}
+.top-menu__links a, .top-menu__links a:link, .top-menu__links a:visited, #account .dropdown-trigger,
+.top-menu__links a:hover, #account .dropdown-trigger:hover,
+#header a, #header a:hover { color: var(--uly-on-header); }
+.top-menu__links svg.icon-svg, #account .dropdown-trigger .icon-svg,
+.top-menu__links a:hover svg.icon-svg, #account .dropdown-trigger:hover .icon-svg { stroke: var(--uly-on-header); }
+#header h1 { font-family: var(--uly-font-serif); font-weight: 600; }
+#header h1 .breadcrumbs { font-family: var(--uly-font-sans); }
+
+/* White text on a fill: core's literal white, and white on blue-5, which is accent here and too
+   light to hold text. Every other white-on-fill in core is surface on an ink, a pair the check
+   measures. */
+.pagination ul.pages li.current, .badge-count { color: var(--uly-on-primary); background-color: var(--uly-primary-fill); }
+.cal .calbody.today .day-value { color: var(--uly-on-primary); }
+.cal .calbody.today .day-value::before { background: var(--uly-primary-fill); }
+/* On narrow screens the project menu's trigger sits on the header. */
+@media screen and (max-width: 899px) {
+  #project-jump .drdn-trigger { color: var(--uly-on-header); }
+}
+/* Initials avatars are surface on an ink; core gives the yellow one black, which is ink on ink. */
+span[role="img"].avatar { font-family: var(--uly-font-sans); }
+.avatar-color-2 { color: var(--uly-surface); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: var(--uly-duration) !important; animation-duration: var(--uly-duration) !important; }
+}

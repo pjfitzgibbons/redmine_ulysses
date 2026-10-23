@@ -1,0 +1,120 @@
+/*
+ * Ulysses's reference theme: a value for every property of the theme contract
+ * (lib/redmine_ulysses/theme.rb). The palette is drawn from Papilio ulysses, the blue swallowtail:
+ * black velvet around the cerulean patch of its upper wing. The fonts are IBM Plex, under the
+ * SIL Open Font License (licenses/ibm-plex.txt).
+ *
+ * A site overrides any of these in public/ulysses/theme.css, which loads after this file. The
+ * README's theme guide says how, and docs/design-book.html shows every value.
+ *
+ * Copyright (C) 2026 Peter Fitzgibbons. GPL-2.0-or-later; see LICENSE.
+ */
+
+@font-face { font-family: "IBM Plex Sans"; src: url("fonts/IBMPlexSans-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("fonts/IBMPlexSans-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("fonts/IBMPlexSans-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("fonts/IBMPlexSans-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("fonts/IBMPlexSans-BoldItalic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("fonts/IBMPlexMono-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("fonts/IBMPlexMono-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Serif"; src: url("fonts/IBMPlexSerif-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Serif"; src: url("fonts/IBMPlexSerif-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+
+:root {
+  /* Text */
+  --uly-ink: #0d1321;
+  --uly-muted: #3d4859;
+  --uly-faint: #566173;
+  /* Grounds and rules */
+  --uly-page: #f5f7fa;
+  --uly-surface: #ffffff;
+  --uly-sunk: #e9edf3;
+  --uly-rule: #ccd4e0;
+  /* Links, buttons and focus */
+  --uly-primary: #0b5aa8;
+  --uly-primary-fill: #0b5aa8;
+  --uly-on-primary: #ffffff;
+  --uly-accent: #1798d4;
+  --uly-focus: #1798d4;
+  /* Status: each ink is read on its soft shade */
+  --uly-ok-ink: #1b6a2e;
+  --uly-ok-soft: #e1f3e5;
+  --uly-warn-ink: #7a4f00;
+  --uly-warn-soft: #fcefd0;
+  --uly-danger-ink: #ac1f29;
+  --uly-danger-soft: #fbe3e4;
+  --uly-info-ink: #0b5aa8;
+  --uly-info-soft: #e2edfa;
+  /* The header and top menu */
+  --uly-header-from: #05070d;
+  --uly-header-to: #0a4e9b;
+  --uly-on-header: #ffffff;
+
+  --uly-font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --uly-font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --uly-font-serif: "IBM Plex Serif", Georgia, serif;
+
+  --uly-text-xs: 0.6875rem;
+  --uly-text-sm: 0.75rem;
+  --uly-text-base: 0.875rem;
+  --uly-text-lg: 1.0625rem;
+  --uly-text-xl: 1.25rem;
+  --uly-text-2xl: 1.5rem;
+  --uly-leading: 1.5;
+  --uly-leading-tight: 1.25;
+
+  --uly-space-1: 0.25rem;
+  --uly-space-2: 0.5rem;
+  --uly-space-3: 0.75rem;
+  --uly-space-4: 1rem;
+  --uly-space-5: 1.5rem;
+  --uly-space-6: 2rem;
+
+  --uly-radius-sm: 3px;
+  --uly-radius: 5px;
+  --uly-radius-pill: 999px;
+
+  --uly-shadow: 0 1px 2px rgb(13 19 33 / 0.08);
+  --uly-shadow-raised: 0 4px 12px rgb(13 19 33 / 0.14);
+
+  --uly-duration: 160ms;
+  --uly-duration-slow: 240ms;
+  --uly-easing: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --uly-ink: #e8edf5;
+    --uly-muted: #b0bbcc;
+    --uly-faint: #8c98ab;
+    --uly-page: #0b0e14;
+    --uly-surface: #121722;
+    --uly-sunk: #07090d;
+    --uly-rule: #2a3345;
+    --uly-primary: #62b6ff;
+    --uly-primary-fill: #1c69bd;
+    --uly-on-primary: #ffffff;
+    --uly-accent: #38c3ff;
+    --uly-focus: #38c3ff;
+    --uly-ok-ink: #72d68d;
+    --uly-ok-soft: #12301b;
+    --uly-warn-ink: #f2c450;
+    --uly-warn-soft: #33280b;
+    --uly-danger-ink: #ff8a90;
+    --uly-danger-soft: #3c1418;
+    --uly-info-ink: #7cc4ff;
+    --uly-info-soft: #0f2643;
+    --uly-header-from: #000000;
+    --uly-header-to: #0a3d7d;
+    --uly-on-header: #ffffff;
+    --uly-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+    --uly-shadow-raised: 0 4px 12px rgb(0 0 0 / 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --uly-duration: 0ms;
+    --uly-duration-slow: 0ms;
+  }
+}
