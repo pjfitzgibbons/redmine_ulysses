@@ -27,7 +27,7 @@ class UlyssesFieldsController < ApplicationController
                            errors: [l(:ulysses_error_notes_required, field: @field.label)])
     end
 
-    requested = @field.normalize(value)
+    requested = @field.normalize(@issue, value)
     @issue.init_journal(User.current, @field.notes_required? ? notes : nil)
     @issue.safe_attributes = @field.attributes(value)
     # Set apart from safe_attributes=, which keeps lock_version only for a user who may edit the
@@ -57,9 +57,11 @@ class UlyssesFieldsController < ApplicationController
     @project = @issue.project
   end
 
+  # A custom field the user may not see is as unknown as one that doesn't exist, so its name isn't
+  # given away.
   def find_field
     @field = RedmineUlysses::Field.find(params[:field])
-    render_404 unless @field
+    render_404 unless @field&.visible?(@issue, User.current)
   end
 
   # As the edit form is authorized.
