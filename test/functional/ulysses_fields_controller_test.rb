@@ -51,9 +51,25 @@ class UlyssesFieldsControllerTest < Redmine::ControllerTest
   end
 
   def test_edit_of_a_field_the_user_cant_change_is_403
-    get :edit, params: {id: 1, field: "cf_#{@hidden.id}"}
+    WorkflowPermission.create!(role_id: 1, tracker_id: 1, old_status_id: 1, field_name: @text.id.to_s, rule: 'readonly')
+    get :edit, params: {id: 1, field: "cf_#{@text.id}"}
     assert_response :forbidden
-    assert_select "turbo-frame#ulysses-issue-1-cf_#{@hidden.id} [role=alert]"
+    assert_select "turbo-frame#ulysses-issue-1-cf_#{@text.id} [role=alert]"
+  end
+
+  # Core's form takes a file field's upload, not a value.
+  def test_edit_of_a_file_custom_field_is_403
+    file = IssueCustomField.create!(name: 'Ulysses file', field_format: 'attachment', is_for_all: true, tracker_ids: [1])
+    get :edit, params: {id: 1, field: "cf_#{file.id}"}
+    assert_response :forbidden
+  end
+
+  # Set from the status, done_ratio is whatever the status says, and core's form hides it.
+  def test_edit_of_done_ratio_set_from_the_status_is_403
+    with_settings issue_done_ratio: 'issue_status' do
+      get :edit, params: {id: 1, field: 'done_ratio'}
+    end
+    assert_response :forbidden
   end
 
   # editable_custom_field_values alone would let this one through.
@@ -98,6 +114,16 @@ class UlyssesFieldsControllerTest < Redmine::ControllerTest
     save "cf_#{@tags.id}", %w(red blue)
     assert_response :success
     assert_equal %w(blue red), @issue.reload.custom_field_value(@tags).sort
+    assert_equal %w(blue red), rest_value("cf_#{@tags.id}").text.strip.split(', ').sort
+  end
+
+  # A French user types 1,5; Redmine stores 1.5.
+  def test_saved_float_custom_field_in_a_comma_locale
+    User.find(2).update!(language: 'fr')
+    float = IssueCustomField.create!(name: 'Ulysses float', field_format: 'float', is_for_all: true, tracker_ids: [1])
+    save "cf_#{float.id}", '1,5'
+    assert_response :success
+    assert_equal '1.5', @issue.reload.custom_field_value(float)
   end
 
   # 200 unchanged, no journal
@@ -175,8 +201,13 @@ class UlyssesFieldsControllerTest < Redmine::ControllerTest
     assert_refused(:forbidden, "cf_#{@text.id}", 'after', saved: 'before')
   end
 
-  def test_hidden_custom_field_is_403
-    assert_refused(:forbidden, "cf_#{@hidden.id}", 'after', saved: '')
+  # A field the user can't see is unknown, so its name isn't given away.
+  def test_hidden_custom_field_is_404
+    assert_no_difference 'Journal.count' do
+      save "cf_#{@hidden.id}", 'after'
+    end
+    assert_response :not_found
+    assert_not_includes response.body, @hidden.name
   end
 
   def test_a_key_safe_attributes_drops_is_403
@@ -186,10 +217,10 @@ class UlyssesFieldsControllerTest < Redmine::ControllerTest
   def test_hidden_custom_field_value_is_not_shown_on_refusal
     CustomValue.create!(customized: @issue, custom_field: @hidden, value: 'secret')
     get :edit, params: {id: 1, field: "cf_#{@hidden.id}"}
-    assert_response :forbidden
+    assert_response :not_found
     assert_not_includes response.body, 'secret'
     save "cf_#{@hidden.id}", 'after'
-    assert_response :forbidden
+    assert_response :not_found
     assert_not_includes response.body, 'secret'
   end
 
@@ -294,6 +325,18 @@ class UlyssesFieldsControllerTest < Redmine::ControllerTest
       patch :update, params: {id: 1, field: 'subject', value: 'New subject'}
     end
     assert_response :bad_request
+  end
+
+  # A parent the user can't see answers as one that doesn't exist, so the answer doesn't say which.
+  def test_hidden_parent_answers_as_a_missing_one
+    hidden = Issue.generate!(project: Project.generate!(is_public: false))
+    save 'parent_issue_id', hidden.id.to_s
+    assert_response :unprocessable_content
+    hidden_errors = stream_content('ulysses-issue-1-parent_issue_id').css('.ulysses-field-error li').map(&:text)
+    save 'parent_issue_id', (Issue.maximum(:id) + 1).to_s
+    assert_response :unprocessable_content
+    assert_equal hidden_errors, stream_content('ulysses-issue-1-parent_issue_id').css('.ulysses-field-error li').map(&:text)
+    assert_nil @issue.reload.parent_id
   end
 
   # Lost from sight between the first read and the answer
