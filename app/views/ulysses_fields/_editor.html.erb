@@ -1,0 +1,28 @@
+<%# The field's editor, showing value. Its template keeps the field at its saved value, which
+    Cancel and Esc put back without a request. %>
+<% dom_id = ulysses_field_dom_id(issue, field) %>
+<%= content_tag 'turbo-frame', id: dom_id, class: 'ulysses-field ulysses-field-editing' do %>
+  <template class="ulysses-field-saved"><%= render partial: 'ulysses_fields/rest', locals: {issue: issue, field: field} %></template>
+  <%= form_with url: ulysses_issue_field_path(issue, field.key), method: :patch, data: {turbo: true} do %>
+    <%= hidden_field_tag 'lock_version', issue.lock_version, id: nil %>
+    <label for="<%= dom_id %>-value"><%= field.label %></label>
+    <%= ulysses_field_control(issue, field, value,
+                              errors.any? ? {aria: {invalid: true, describedby: "#{dom_id}-errors"}} : {}) %>
+    <% if field.notes_required? %>
+      <label for="<%= dom_id %>-notes"><%= l(:ulysses_label_notes) %></label>
+      <%= textarea_tag 'notes', params[:notes], id: "#{dom_id}-notes", required: true, rows: 2 %>
+    <% end %>
+    <% if errors.any? %>
+      <ul id="<%= dom_id %>-errors" class="ulysses-field-error" role="alert">
+        <% errors.each do |error| %><li><%= error %></li><% end %>
+      </ul>
+    <% end %>
+    <% if conflict %>
+      <p class="ulysses-field-conflict" role="alert">
+        <%= l(:ulysses_text_conflict, author: conflict[:author].to_s, time: format_time(conflict[:time])) %>
+        <span class="ulysses-field-current"><%= ulysses_field_text(issue, field) %></span>
+      </p>
+    <% end %>
+    <%= submit_tag l(:button_save), name: nil %>
+  <% end %>
+<% end %>

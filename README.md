@@ -4,10 +4,23 @@ Ulysses is a Redmine plugin for editing the issue page and the issue list in pla
 time, each edit journaled as the edit form's would be. Its design is gh-plan's
 [issue page and issue list design](https://github.com/pjfitzgibbons/gh-plan/blob/main/docs/design/0004-issue-ux.md).
 
-This release edits nothing yet. It draws every Redmine page from the Ulysses theme, which a site
-can change in one file (see *Theming*). It adds Turbo to Redmine's importmap and loads it on the
-issue page only, with Turbo Drive off, so core's links and forms navigate as they always have. It
-registers the plugin's Stimulus controllers beside core's.
+This release draws every Redmine page from the Ulysses theme, which a site can change in one file
+(see *Theming*). It adds Turbo to Redmine's importmap and loads it on the issue page only, with
+Turbo Drive off, so core's links and forms navigate as they always have. It registers the plugin's
+Stimulus controllers beside core's. It has the routes that open and save one field, which the
+issue page doesn't use yet:
+
+| Route | Does |
+|---|---|
+| `GET /ulysses/issues/:id/fields/:field/edit` | Renders the field's editor into its Turbo Frame, or 403 for a field the user can't change |
+| `PATCH /ulysses/issues/:id/fields/:field` | Saves `value` with `lock_version` through Redmine's own issue saving, one journal entry per save, and answers with Turbo Streams: the field and the new `lock_version` |
+
+`:field` is a core attribute, such as `status_id`, or `cf_<id>`. The routes take the session and
+the CSRF token, never an API key. A save answers 200 when it saves or changes nothing, 403 for a
+field the user may not set, 409 when the issue changed since `lock_version`, 422 when Redmine's
+validation fails or a field that needs a note has none, and 400 for a value of the wrong shape,
+such as an array for a single-valued field. The fields that need a note are listed in
+`Setting.plugin_redmine_ulysses["notes_required"]`, which has no settings page yet.
 
 It needs Redmine 7.0.2 or later. It changes no table, adds no migration and leaves the REST API
 as core has it.

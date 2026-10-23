@@ -1,0 +1,20 @@
+<%# The field at rest: its value, a link to its editor when the user may change it, and the
+    outcome of the save that drew it. %>
+<% message = local_assigns[:message]; outcome = local_assigns[:outcome] %>
+<% text = ulysses_field_text(issue, field) %>
+<%= content_tag 'turbo-frame', id: ulysses_field_dom_id(issue, field), class: 'ulysses-field',
+                               data: {ulysses_outcome: outcome} do %>
+  <% if field.editable?(issue, User.current) %>
+    <%= link_to text.presence || '—', edit_ulysses_issue_field_path(issue, field.key),
+                class: 'ulysses-field-value', data: {turbo: true},
+                aria: {label: l(:ulysses_label_edit_field, field: field.label, value: strip_tags(text.to_s))} %>
+  <% else %>
+    <span class="ulysses-field-value"><%= text %></span>
+  <% end %>
+  <% if message %>
+    <p class="ulysses-field-error" role="alert"><%= message %></p>
+  <% end %>
+  <% if outcome == :saved %>
+    <span class="ulysses-field-announce" role="status"><%= l(:ulysses_notice_saved, field: field.label) %></span>
+  <% end %>
+<% end %>

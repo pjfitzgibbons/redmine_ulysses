@@ -7,7 +7,11 @@
 # GNU General Public License as published by the Free Software Foundation; either version 2 of the
 # License, or (at your option) any later version. See LICENSE.
 
+require_relative 'lib/redmine_ulysses/field'
 require_relative 'lib/redmine_ulysses/hooks'
+
+# The fields controller answers with Turbo Streams. Redmine has no turbo-rails to register the type.
+Mime::Type.register 'text/vnd.turbo-stream.html', :turbo_stream unless Mime[:turbo_stream]
 
 Redmine::Plugin.register :redmine_ulysses do
   name 'Ulysses'
@@ -16,6 +20,8 @@ Redmine::Plugin.register :redmine_ulysses do
   version '0.1.0'
   url 'https://github.com/pjfitzgibbons/redmine_ulysses'
   requires_redmine version_or_higher: '7.0.2'
+  # notes_required lists the fields whose save needs a note (design 0004 §3.3, §3.6).
+  settings default: {'groups' => [], 'notes_required' => []}
 end
 
 # The plugin's pins join core's importmap: Turbo, the plugin's entry module, and its Stimulus

@@ -1,0 +1,9 @@
+en:
+  ulysses_label_edit_field: "Edit %{field}, %{value}"
+  ulysses_label_notes: "Why"
+  ulysses_label_unavailable: "%{value} (not available now)"
+  ulysses_notice_saved: "%{field} saved."
+  ulysses_text_conflict: "%{author} changed this at %{time}. It is now:"
+  ulysses_error_not_editable: "You can't change %{field}."
+  ulysses_error_shape: "%{field} can't take a value of that kind."
+  ulysses_error_notes_required: "%{field} needs a note saying why."
